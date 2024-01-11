@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rsyslog-forwarder
+spec:
+  selector:
+    matchLabels:
+      app: rsyslog-forwarder
+  template:
+    metadata:
+      labels:
+        app: rsyslog-forwarder
+    spec:
+      containers:
+      - name: rsyslog-forwarder
+        image: w0n9/rsyslog-forwarder
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - name: rsyslog-tcp
+          containerPort: 514
+          protocol: TCP
+        - name: rsyslog-udp
+          containerPort: 514
+          protocol: UDP
+        volumeMounts:
+        - name: rsyslog-conf
+          mountPath: /etc/rsyslog.conf
+          subPath: rsyslog.conf
+          readOnly: true
+      volumes:
+      - name: rsyslog-conf
+        configMap:
+          name: rsyslog-conf
+          optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rsyslog-forwarder
+spec:
+  type: LoadBalancer
+  selector:
+    app: rsyslog-forwarder
+  ports:
+  - name: rsyslog-tcp
+    port: 514
+    protocol: TCP
+    targetPort: rsyslog-tcp
+  - name: rsyslog-udp
+    port: 514
+    protocol: UDP
+    targetPort: rsyslog-udp
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rsyslog-conf
+data:
+  rsyslog.conf: ""
+
+
