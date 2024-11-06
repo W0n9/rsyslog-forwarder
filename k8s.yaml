@@ -11,6 +11,16 @@ spec:
       labels:
         app: rsyslog-forwarder
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: Exists
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
       containers:
       - name: rsyslog-forwarder
         image: w0n9/rsyslog-forwarder
@@ -30,6 +40,11 @@ spec:
           mountPath: /etc/rsyslog.conf
           subPath: rsyslog.conf
           readOnly: true
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
       volumes:
       - name: rsyslog-conf
         configMap:
